@@ -6,8 +6,8 @@ let lastTime=0;
 let wireThickness = 3;
 let objects=[];
 let points=[];
-canvas.width=800;
-canvas.height=500;
+canvas.width=1700;
+canvas.height=620;
 
 canvas.addEventListener("pointerdown",(event)=>{
     canvas.setPointerCapture(event.pointerId);

@@ -8,8 +8,23 @@
    
 </head>
 <body>
-    <h1>Draw Anything and see it behave!</h1>
-    <canvas id="canvas"></canvas>
-    <script src="main.js"></script>
+     <h1 id="head">Draw Anything and see it behave!</h1>
+    <div class="app">
+       
+        <div class="toolbar" id="vertical">
+            <button class="one">✏️</button>
+            <button class="one">📦</button>
+        </div>
+        <div class="workspace">
+            <canvas id="canvas"></canvas>
+            <div id="horizontal">
+                <button class="options"></button>
+                <button class="options"></button>
+            </div>
+        </div>
+        
+        <script src="main.js"></script>
+    </div>
+   
 </body>
 </html>
