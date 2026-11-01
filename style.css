@@ -38,6 +38,10 @@
     font-size: 60px;
 }
 
+.one:hover{
+    cursor: pointer;
+}
+
 #horizontal{
     height: 75px;
     width: 100%;
@@ -46,4 +50,51 @@
     border-radius: 20px;
     display: flex;
     flex-direction:row;
+}
+
+#thickness{
+    width: 150px;
+    cursor: pointer;
+    margin-right: 20px;
+}
+#nameof{
+    margin-top:18px ;
+    margin-left: 24px;
+    font-size: 30px;
+    color: white;
+    font-weight: bold;
+    margin-right: 12px;
+}
+#thickness-value{
+    margin-top:18px ;
+    font-size: 30px;
+    color: white;
+    font-weight: bold;
+}
+.color-option{
+    height: 60px;
+    border-radius: 50%;
+    border: 2px white solid;
+    cursor: pointer;
+    width: 60px;
+    margin-left: 8px;
+    margin-top: 5px;
+    margin-bottom: 3px;
+    margin-right: 6px;
+}
+
+.color-option[data-color="#171717"]{
+    background: #171717;
+}
+.color-option[data-color="red"]{
+    background: red;
+}
+.color-option[data-color="green"]{
+    background: green;
+}
+.color-option[data-color="blue"]{
+    background: blue;
+}
+.color-option[data-color="yellow"]{
+    background: yellow;
 }

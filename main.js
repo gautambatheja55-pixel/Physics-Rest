@@ -1,11 +1,17 @@
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
+const penButton = document.getElementById("freehand");
+const shapesButton = document.getElementById("shapes");
+const horizontarBar = document.getElementById("horizontal");
+
 let isFreeHand=false;
 let gravity=9.81;
 let lastTime=0;
 let wireThickness = 3;
 let objects=[];
 let points=[];
+let penColor="#171717";
+
 canvas.width=1700;
 canvas.height=620;
 
@@ -33,7 +39,8 @@ canvas.addEventListener("pointerup",(event)=>{
         velocityY:0,
         length:length,
         thickness: wireThickness,
-        density:materialDensity
+        density:materialDensity,
+        color:penColor
     });
     object.mass=calculateMass(object);
     objects.push(object);
@@ -88,23 +95,34 @@ function updatePhysics(deltaTime){
             point.y += object.velocityY * deltaTime;
         }
     }
- 
-
-
-    // let lowestPoint=object.points[0].y;
-    // for (let point of objects){
-    //     if (point.y > lowestPoint){
-    //         lowestPoint=point.y;
-    //     }
-    // }
-    // if (lowestPoint >= canvas.height){
-    //     object.velocityY=0;
-
-    //     for (let point of objects.point){
-    //         point.y-= lowestPoint-canvas.height;
-    //     }
-    // }
 };
+
+penButton.addEventListener("click",showFreehandOptions);
+
+function showFreehandOptions(){
+    horizontarBar.innerHTML=`
+    <button class="color-option" data-color="#171717"></button>
+    <button class="color-option" data-color="red"></button>
+    <button class="color-option" data-color="green"></button>
+    <button class="color-option" data-color="blue"></button>
+    <button class="color-option" data-color="yellow"></button>
+    <label for="thickness" id="nameof">Thickness: </label>
+    <input type="range" id="thickness" min="1" max="12" value="3">
+    <span id="thickness-value"> 3px</span>`;
+
+    let colorButtons = horizontarBar.querySelectorAll(".color-option");
+    colorButtons.forEach(button => {
+        button.addEventListener("click",()=>{
+            penColor=button.dataset.color;
+        });
+    });
+    const thicknessSlider = document.getElementById("thickness");
+    const thicknessValue= document.getElementById("thickness-value");
+    thicknessSlider.addEventListener("input",()=>{
+        wireThickness=Number(thicknessSlider.value);
+        thicknessValue.textContent=wireThickness + " px";
+    });
+}   
 
 function animate(currentTime){
     if (lastTime===0){
@@ -125,6 +143,7 @@ function animate(currentTime){
                 object.points[i].x, object.points[i].y
             )};
         ctx.lineWidth=object.thickness;
+        ctx.strokeStyle=object.color;
         ctx.stroke();
         }
     
@@ -134,12 +153,12 @@ function animate(currentTime){
         for (let i=1;i<points.length;i++){
             ctx.lineTo(points[i].x,points[i].y);
         }
-        ctx.lineWidth=3;
-        ctx.stroke();
-    }
 
-    ctx.stroke();
-    
+       ctx.lineWidth=wireThickness;
+       ctx.strokeStyle=penColor;
+       ctx.stroke();
+    }
+ 
     requestAnimationFrame(animate);
 };
 
