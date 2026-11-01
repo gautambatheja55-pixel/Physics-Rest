@@ -1,7 +1,8 @@
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 let isFreeHand=false;
-let gravity=0.5;
+let gravity=9.81;
+let lastTime=0;
 let wireThickness = 3;
 let objects=[];
 let points=[];
@@ -79,14 +80,16 @@ function calculateMass(object){
     return mass;
 };
 
-function updatePhysics(){
+function updatePhysics(deltaTime){
     for (let object of objects){
-        object.velocityY+=gravity;
+        object.velocityY+=gravity * deltaTime;
 
         for (let point of object.points){
-            point.y += object.velocityY;
+            point.y += object.velocityY * deltaTime;
         }
     }
+ 
+
 
     // let lowestPoint=object.points[0].y;
     // for (let point of objects){
@@ -103,8 +106,16 @@ function updatePhysics(){
     // }
 };
 
-function animate(){
-    updatePhysics();
+function animate(currentTime){
+    if (lastTime===0){
+        lastTime=currentTime;
+        requestAnimationFrame(animate);
+        return;
+    }
+    let deltaTime=(currentTime-lastTime)/1000;
+    lastTime=currentTime;
+    updatePhysics(deltaTime);
+
     ctx.clearRect(0,0,canvas.width,canvas.height)
     for (let object of objects){
         ctx.beginPath();
