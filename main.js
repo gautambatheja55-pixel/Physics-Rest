@@ -5,32 +5,73 @@ const shapesButton = document.getElementById("shapes");
 const horizontarBar = document.getElementById("horizontal");
 
 let isFreeHand=false;
+let isDrawingShape = false;
 let gravity=9.81;
 let lastTime=0;
 let wireThickness = 3;
 let objects=[];
 let points=[];
 let penColor="#171717";
+let selectedShape = null;
+let startX = 0;
+let startY = 0;
+let currentX =0;
+let currentY = 0;
 
 canvas.width=1700;
 canvas.height=620;
 
 canvas.addEventListener("pointerdown",(event)=>{
     canvas.setPointerCapture(event.pointerId);
+    if (selectedShape != null){
+        isDrawingShape = true;
+        startX=event.offsetX;
+        startY=event.offsetY;
+        currentX = startX;
+        currentY = startY;
+        return;
+    }
+
     isFreeHand=true;
     points=[];
     points.push({x: event.offsetX,y: event.offsetY});
+    
 });
 
 canvas.addEventListener("pointermove",(event)=>{
+    if (selectedShape !== null){
+        currentX = event.offsetX;
+        currentY = event.offsetY;
+        return;
+    }
     if (!isFreeHand) return;
-
     points.push({
         x: event.offsetX,y: event.offsetY
     });
 });
 
 canvas.addEventListener("pointerup",(event)=>{
+    if (selectedShape!=null){
+        let endX = event.offsetX;
+        let endY = event.offsetY;
+        
+        if (selectedShape === "rectangle"){
+            let width =endX- startX;
+            let height= endY - startY;
+            let shape = {
+                type:"rectangle",
+                x: startX,
+                y:startY,
+                width:width,
+                height:height,
+                velocityY:0
+            };
+            objects.push(shape);
+            isDrawingShape=false;
+        }
+        return;
+    }
+
     isFreeHand=false;
     let length= calculateLength(points);
     let materialDensity=8920;
@@ -89,6 +130,11 @@ function calculateMass(object){
 
 function updatePhysics(deltaTime){
     for (let object of objects){
+        if (object.type === "rectangle"){
+            object.velocityY += gravity * deltaTime;
+            object.y += object.velocityY * deltaTime;
+            continue;
+        }
         object.velocityY+=gravity * deltaTime;
 
         for (let point of object.points){
@@ -98,6 +144,7 @@ function updatePhysics(deltaTime){
 };
 
 penButton.addEventListener("click",showFreehandOptions);
+shapesButton.addEventListener("click",showShapesOptions);
 
 function showFreehandOptions(){
     horizontarBar.innerHTML=`
@@ -124,6 +171,19 @@ function showFreehandOptions(){
     });
 }   
 
+function showShapesOptions(){
+    horizontarBar.innerHTML=`
+    <button class="shape-option" data-shape="rectangle"> ▭ </button>
+    <button class="shape-option" data-shape="circle">°</button>
+    <button class="shape-option" data-shape="triangle"> △ </button>`
+    let shapeButtons = horizontarBar.querySelectorAll(".shape-option");
+    shapeButtons.forEach(button => {
+        button.addEventListener("click",() => {
+            selectedShape = button.dataset.shape;
+        });
+    });
+}
+
 function animate(currentTime){
     if (lastTime===0){
         lastTime=currentTime;
@@ -136,6 +196,17 @@ function animate(currentTime){
 
     ctx.clearRect(0,0,canvas.width,canvas.height)
     for (let object of objects){
+        if (object.type === "rectangle"){
+            ctx.strokeRect(
+                object.x,
+                object.y,
+                object.width,
+                object.height
+            );
+        continue;
+      }
+
+
         ctx.beginPath();
         ctx.moveTo(object.points[0].x, object.points[0].y);
         for (let i=1;i< object.points.length; i++){
@@ -147,6 +218,11 @@ function animate(currentTime){
         ctx.stroke();
         }
     
+    if (isDrawingShape && selectedShape === "rectangle"){
+        let width= currentX - startX;
+        let height = currentY - startY;
+        ctx.strokeRect(startX,startY,width,height);
+    }
     if (isFreeHand){
         ctx.beginPath();
         ctx.moveTo(points[0].x,points[0].y);
