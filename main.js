@@ -69,6 +69,21 @@ canvas.addEventListener("pointerup",(event)=>{
             objects.push(shape);
             isDrawingShape=false;
         }
+
+        if (selectedShape === "circle"){
+            let dx = endX - startX;
+            let dy = endY - startY;
+            let radius = Math.sqrt(dx*dx + dy * dy);
+            let shape ={
+                type:"circle",
+                x:startX,
+                y:startY,
+                radius:radius,
+                velocityY:0
+            };
+            objects.push(shape);
+            isDrawingShape=false;
+        }
         return;
     }
 
@@ -135,6 +150,11 @@ function updatePhysics(deltaTime){
             object.y += object.velocityY * deltaTime;
             continue;
         }
+        if (object.type === "circle"){
+            object.velocityY += gravity * deltaTime;
+            object.y += object.velocityY * deltaTime;
+            continue;
+        }
         object.velocityY+=gravity * deltaTime;
 
         for (let point of object.points){
@@ -147,6 +167,7 @@ penButton.addEventListener("click",showFreehandOptions);
 shapesButton.addEventListener("click",showShapesOptions);
 
 function showFreehandOptions(){
+    selectedShape = null;
     horizontarBar.innerHTML=`
     <button class="color-option" data-color="#171717"></button>
     <button class="color-option" data-color="red"></button>
@@ -172,6 +193,7 @@ function showFreehandOptions(){
 }   
 
 function showShapesOptions(){
+    isFreeHand = false;
     horizontarBar.innerHTML=`
     <button class="shape-option" data-shape="rectangle"> ▭ </button>
     <button class="shape-option" data-shape="circle">°</button>
@@ -203,10 +225,15 @@ function animate(currentTime){
                 object.width,
                 object.height
             );
-        continue;
-      }
-
-
+            continue;
+        }
+        if (object.type === "circle"){
+            ctx.beginPath();
+            ctx.arc(object.x,object.y,object.radius,0,Math.PI * 2);
+            ctx.stroke();
+            continue;
+        }
+      
         ctx.beginPath();
         ctx.moveTo(object.points[0].x, object.points[0].y);
         for (let i=1;i< object.points.length; i++){
@@ -222,6 +249,14 @@ function animate(currentTime){
         let width= currentX - startX;
         let height = currentY - startY;
         ctx.strokeRect(startX,startY,width,height);
+    }
+    if (isDrawingShape && selectedShape === "circle"){
+        let dx = currentX - startX;
+        let dy = currentY - startY;
+        let radius = Math.sqrt(dx*dx + dy * dy);
+        ctx.beginPath();
+        ctx.arc(startX,startY,radius,0,Math.PI*2);
+        ctx.stroke();
     }
     if (isFreeHand){
         ctx.beginPath();
