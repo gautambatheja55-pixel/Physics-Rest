@@ -3,6 +3,7 @@ const ctx = canvas.getContext("2d");
 const penButton = document.getElementById("freehand");
 const shapesButton = document.getElementById("shapes");
 const horizontarBar = document.getElementById("horizontal");
+const PIXELS_PER_METER = 100;
 
 let isFreeHand=false;
 let isDrawingShape = false;
@@ -98,8 +99,11 @@ canvas.addEventListener("pointerup",(event)=>{
         density:materialDensity,
         color:penColor
     });
+    let box = BoundingBox(object);
+    console.log(box);
     object.mass=calculateMass(object);
     objects.push(object);
+    console.log(box);
     console.log("Length: ",object.length,"m");
     console.log("Thickness: ",object.thickness);
     console.log("Density: ", object.density);
@@ -129,7 +133,7 @@ function calculateLength(points){
         let distance = Math.sqrt(dx*dx + dy*dy);
         totalLength+=distance;
     }
-      return totalLength/100; //for now 100px =1m
+      return totalLength/PIXELS_PER_METER
 }
 
 function calculateMass(object){
@@ -206,6 +210,34 @@ function showShapesOptions(){
     });
 }
 
+function BoundingBox(object){
+    let minX = object.points[0].x;
+    let maxX = object.points[0].x;
+    let minY = object.points[0].y;
+    let maxY = object.points[0].y;
+
+    for ( let point of object.points){
+        if (point.x < minX){
+            minX = point.x;
+        }
+        if (point.x > maxX){
+            maxX=point.x;
+        }
+        if (point.y < minY){
+            minY = point.y;
+        }
+        if (point.y > maxY){
+            maxY = point.y
+        }
+    }
+    return {
+        minX:minX,
+        maxX:maxX,
+        minY:minY,
+        maxY:maxY
+    };
+}
+
 function animate(currentTime){
     if (lastTime===0){
         lastTime=currentTime;
@@ -217,6 +249,13 @@ function animate(currentTime){
     updatePhysics(deltaTime);
 
     ctx.clearRect(0,0,canvas.width,canvas.height)
+    ctx.beginPath();
+    ctx.moveTo(0,canvas.height - 10);
+    ctx.lineTo(canvas.width,canvas.height - 10);
+    ctx.strokeStyle="black";
+    ctx.lineWidth=5;
+    ctx.stroke();
+
     for (let object of objects){
         if (object.type === "rectangle"){
             ctx.strokeRect(
