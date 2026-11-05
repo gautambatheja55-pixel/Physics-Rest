@@ -99,11 +99,8 @@ canvas.addEventListener("pointerup",(event)=>{
         density:materialDensity,
         color:penColor
     });
-    let box = BoundingBox(object);
-    console.log(box);
     object.mass=calculateMass(object);
     objects.push(object);
-    console.log(box);
     console.log("Length: ",object.length,"m");
     console.log("Thickness: ",object.thickness);
     console.log("Density: ", object.density);
@@ -211,6 +208,25 @@ function showShapesOptions(){
 }
 
 function BoundingBox(object){
+
+    if (object.type === "rectangle"){
+        return{
+            minX: Math.min(object.x,object.x + object.width),
+            maxX: Math.max(object.x,object.x + object.width),
+            minY: Math.min(object.y, object.y + object.height),
+            maxY: Math.max(object.y, object.y + object.height)
+        };
+    }
+
+    if (object.type === "circle"){
+        return{
+            minX:object.x - object.radius,
+            maxX:object.x + object.radius,
+            minY: object.y - object.radius,
+            maxY: object.y + object.radius
+        };
+    }
+
     let minX = object.points[0].x;
     let maxX = object.points[0].x;
     let minY = object.points[0].y;
@@ -238,6 +254,28 @@ function BoundingBox(object){
     };
 }
 
+function boundingBoxOverlap(boxA,boxB){
+    if (boxA.minX < boxB.maxX && boxA.maxX > boxB.minX && boxA.minY < boxB.maxY && boxA.maxY >boxB.minY){
+        return true;
+    }
+    return false;
+
+}
+
+function checkCollisions(){
+    for (let i=0; i< objects.length; i++){
+        for (let j=i+1; j< objects.length; j++){
+            let objectA = objects[i];
+            let objectB = objects[j];
+            let boxA = BoundingBox(objectA);
+            let boxB = BoundingBox(objectB);
+            if (boundingBoxOverlap(boxA, boxB)){
+                console.log("it is an collision u should be able to see why you r checking console for it");
+            }
+        }
+    }
+}
+
 function animate(currentTime){
     if (lastTime===0){
         lastTime=currentTime;
@@ -247,6 +285,7 @@ function animate(currentTime){
     let deltaTime=(currentTime-lastTime)/1000;
     lastTime=currentTime;
     updatePhysics(deltaTime);
+    checkCollisions();
 
     ctx.clearRect(0,0,canvas.width,canvas.height)
     ctx.beginPath();
