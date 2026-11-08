@@ -101,6 +101,7 @@ canvas.addEventListener("pointerup",(event)=>{
         color:penColor
     });
     object.mass=calculateMass(object);
+    object.centreOfMass=calculateCentreOfMass(object);
     objects.push(object);
     console.log("Length: ",object.length,"m");
     console.log("Thickness: ",object.thickness);
@@ -109,6 +110,7 @@ canvas.addEventListener("pointerup",(event)=>{
     console.log("Area",object.area);
     console.log("Linear density",object.linearDensity);
     console.log("Mass",object.mass,"kg");
+    console.log("COM: ",object.centreOfMass);
 });
 
 function draw(){
@@ -391,6 +393,42 @@ function wireRectangleIntersect(wire, rectangle){
     }
     return false;
 }
+
+function calculateCentreOfMass(object){
+    if (object.type === "rectangle"){
+        return {
+            x: object.x + object.width/2,
+            y:object.y + object.height /2
+        };
+    }
+    if (object.points){
+        let totalLength =0 ;
+        let weightX = 0;
+        let weightY =0;
+
+        for (let i=0 ; i<object.points.length -1 ; i++){
+            let A = object.points[i];
+            let B = object.points[i+1];
+
+            let dx= B.x  - A.x;
+            let dy= B.y - A.y;
+            let segmentLength = Math.sqrt(dx*dx + dy*dy);
+            let midpointX= (A.x + B.x )/2
+            let midpointY= (A.y + B.y )/2
+            totalLength+=segmentLength;
+            weightX += midpointX * segmentLength;
+            weightY += midpointY * segmentLength;
+        }
+
+        if (totalLength === 0) return null;
+        return {
+            x:weightX/totalLength,
+            y:weightY/totalLength
+        };
+    }
+    return null;
+}
+
 
 function animate(currentTime){
     if (lastTime===0){
