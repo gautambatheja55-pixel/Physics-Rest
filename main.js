@@ -256,11 +256,10 @@ function BoundingBox(object){
 }
 
 function boundingBoxOverlap(boxA,boxB){
-    if (boxA.minX < boxB.maxX && boxA.maxX > boxB.minX && boxA.minY < boxB.maxY && boxA.maxY >boxB.minY){
-        return true;
-    }
-    return false;
-
+    return (boxA.minX < boxB.maxX 
+        && boxA.maxX > boxB.minX 
+        && boxA.minY < boxB.maxY && 
+        boxA.maxY >boxB.minY);
 }
 
 function checkCollisions(){
@@ -323,15 +322,69 @@ function isPointOnSegment(A,B,P){
 
 
 function doObjectsIntersect(objectA , objectB){
-   
-    for (let i = 0 ; i < objectA.points.length - 1; i++){
-        let A = objectA.points[i];
-        let B = objectA.points[i+1];
-        for (let j=0; j< objectB.points.length -1; j++){
-            let C = objectB.points[j];
-            let D = objectB.points[j+1];
+    if (objectA.points && objectB.points){
+        for (let i = 0 ; i < objectA.points.length - 1; i++){
+            let A = objectA.points[i];
+            let B = objectA.points[i+1];
+            for (let j=0; j< objectB.points.length -1; j++){
+                let C = objectB.points[j];
+                let D = objectB.points[j+1];
 
-            if (dosegmentsIntersect(A,B,C,D)){
+                if (dosegmentsIntersect(A,B,C,D)){
+                    return true;
+                }
+            }
+        }
+    }
+
+    if (objectA.type === "rectangle" && objectB.type === "rectangle"){
+        return rectangleRectangleIntersect(objectA, objectB);
+    }
+    if (objectA.points && objectB.type==="rectangle"){
+        return wireRectangleIntersect(objectA,objectB);
+    }
+    if (objectA.type === "rectangle" && objectB.points){
+        return wireRectangleIntersect(objectA,objectB);
+    }
+
+    return false;
+  
+}
+
+function getRectangleEdges(object){
+    let A = {x: object.x , y: object.y};
+    let B = {x: object.x + object.width, y: object.y};
+    let C = {x: object.x + object.width, y: object.y + object.height};
+    let D = {x: object.x, y: object.y + object.height};
+
+    return [
+        [A,B],[B,C],[C,D],[D,A]
+    ];
+}
+
+function rectangleRectangleIntersect(objectA,objectB){
+    let edgesA= getRectangleEdges(objectA);
+    let edgesB = getRectangleEdges(objectB);
+    for (let edgeA of edgesA){
+        for (let edgeB of edgesB){
+            if (dosegmentsIntersect(
+                edgeA[0],edgeA[1],edgeB[0],edgeB[1]
+            )){
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+function wireRectangleIntersect(wire, rectangle){
+    let edges= getRectangleEdges(rectangle);
+    for (let i=0; i<wire.points.length - 1; i++){
+        let A = wire.points[i];
+        let B = wire.points[i+1];
+
+        for (let edge of edges){
+            if (dosegmentsIntersect(A,B,edge[0], edge[1])){
                 return true;
             }
         }
