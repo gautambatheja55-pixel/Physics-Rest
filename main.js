@@ -2,6 +2,7 @@ const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 const penButton = document.getElementById("freehand");
 const shapesButton = document.getElementById("shapes");
+const grabButton = document.getElementById("grabButton");
 const horizontarBar = document.getElementById("horizontal");
 const PIXELS_PER_METER = 100;
 
@@ -270,10 +271,72 @@ function checkCollisions(){
             let boxA = BoundingBox(objectA);
             let boxB = BoundingBox(objectB);
             if (boundingBoxOverlap(boxA, boxB)){
-                console.log("it is an collision u should be able to see why you r checking console for it");
+                if (doObjectsIntersect(objectA,objectB)){
+                      console.log("it is an collision u should be able to see why you r checking console for it");
+                }
             }
         }
     }
+}
+
+
+function orientationof(A, B, C) {
+    return (B.y - A.y) * (C.x - B.x) - (B.x - A.x) * (C.y - B.y)
+}
+
+function dosegmentsIntersect(A,B,C,D){
+    let o1 = orientationof(A,B,C);
+    let o2 = orientationof(A,B,D);
+    let o3 = orientationof(C,D,A);
+    let o4 = orientationof(C,D,B);
+
+    if (o1 * o2 < 0 && o3 * o4 < 0 ){
+        return true;
+    }
+
+    if (o1 === 0 && isPointOnSegment(A,B,C)){
+        return true;
+    }
+    if (o2 === 0 && isPointOnSegment(A,B,D)){
+        return true;
+    }
+    if (o3 === 0 && isPointOnSegment(C,D,A)){
+        return true;
+    }
+    if (o4 === 0 && isPointOnSegment(C,D,B)){
+        return true;
+    }
+    return false;
+}
+
+function isPointOnSegment(A,B,P){
+    if (  
+    Math.abs(orientationof(A,B,P)) < 1e-9 && 
+    P.x >= Math.min(A.x,B.x) &&
+    P.x <= Math.max(A.x, B.x) &&
+    P.y >= Math.min(A.y,B.y) && 
+    P.y <= Math.max(A.y,B.y)){
+        return true;
+    }
+    return false;
+}
+
+
+function doObjectsIntersect(objectA , objectB){
+   
+    for (let i = 0 ; i < objectA.points.length - 1; i++){
+        let A = objectA.points[i];
+        let B = objectA.points[i+1];
+        for (let j=0; j< objectB.points.length -1; j++){
+            let C = objectB.points[j];
+            let D = objectB.points[j+1];
+
+            if (dosegmentsIntersect(A,B,C,D)){
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 function animate(currentTime){
