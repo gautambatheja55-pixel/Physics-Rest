@@ -10,7 +10,7 @@ let isFreeHand=false;
 let isDrawingShape = false;
 let gravity=9.81;
 let lastTime=0;
-let wireThickness = 3;
+let wireThickness = 3; 
 let objects=[];
 let points=[];
 let penColor="#171717";
@@ -66,9 +66,24 @@ canvas.addEventListener("pointerup",(event)=>{
                 y:startY,
                 width:width,
                 height:height,
-                velocityY:0
+                velocityY:0,
+                thickness: wireThickness,
+                density: 8920,
+                length:(2*(Math.abs(width) + Math.abs(height))) / PIXELS_PER_METER,
             };
+            shape.mass=calculateMass(shape);
+            shape.inertia=calculateMomentOfInertia(shape);
+            shape.centreOfMass=calculateCentreOfMass(shape);
             objects.push(shape);
+            console.log("Length: ",shape.length,"m");
+            console.log("Thickness: ",shape.thickness);
+            console.log("Density: ", shape.density);
+            console.log("Radius", shape.wireRadius);
+            console.log("Area",shape.area);
+            console.log("Linear density",shape.linearDensity);
+            console.log("Mass",shape.mass,"kg");
+            console.log("COM: ",shape.centreOfMass);
+            console.log("Inertia: ",shape.inertia);
             isDrawingShape=false;
         }
 
@@ -81,9 +96,23 @@ canvas.addEventListener("pointerup",(event)=>{
                 x:startX,
                 y:startY,
                 radius:radius,
-                velocityY:0
+                velocityY:0,
+                thickness: wireThickness,
+                density:8920,
+                length: (2* Math.PI * radius) / PIXELS_PER_METER
             };
+            shape.mass = calculateMass(shape);
+            shape.inertia = calculateMomentOfInertia(shape);
+            shape.centreOfMass = calculateCentreOfMass(shape);
             objects.push(shape);
+            console.log("Length: ",shape.length,"m");
+            console.log("Thickness: ",shape.thickness);
+            console.log("Density: ", shape.density);
+            console.log("Radius", shape.wireRadius);
+            console.log("Area",shape.area);
+            console.log("Linear density",shape.linearDensity);
+            console.log("Mass",shape.mass,"kg");
+            console.log("COM: ",shape.centreOfMass);
             isDrawingShape=false;
         }
         return;
@@ -98,19 +127,22 @@ canvas.addEventListener("pointerup",(event)=>{
         length:length,
         thickness: wireThickness,
         density:materialDensity,
-        color:penColor
+        color:penColor,
+        
     });
     object.mass=calculateMass(object);
     object.centreOfMass=calculateCentreOfMass(object);
+    object.inertia=calculateMomentOfInertia(object);
     objects.push(object);
     console.log("Length: ",object.length,"m");
     console.log("Thickness: ",object.thickness);
     console.log("Density: ", object.density);
-    console.log("Radius", object.radius);
+    console.log("Radius", object.wireRadius);
     console.log("Area",object.area);
     console.log("Linear density",object.linearDensity);
     console.log("Mass",object.mass,"kg");
     console.log("COM: ",object.centreOfMass);
+    console.log("Inertia: ", object.inertia);
 });
 
 function draw(){
@@ -141,7 +173,7 @@ function calculateMass(object){
     let area= Math.PI*radius**2;
     let linearDensity=object.density*area;
     let mass= linearDensity * object.length;
-    object.radius=radius;
+    object.wireRadius=radius;
     object.area=area;
     object.linearDensity=linearDensity;
     return mass;
@@ -295,16 +327,16 @@ function dosegmentsIntersect(A,B,C,D){
         return true;
     }
 
-    if (o1 === 0 && isPointOnSegment(A,B,C)){
+    if (Math.abs(o1) < 1e-9 && isPointOnSegment(A,B,C)){
         return true;
     }
-    if (o2 === 0 && isPointOnSegment(A,B,D)){
+    if (Math.abs(o2) < 1e-9 && isPointOnSegment(A,B,D)){
         return true;
     }
-    if (o3 === 0 && isPointOnSegment(C,D,A)){
+    if (Math.abs(o3) < 1e-9  && isPointOnSegment(C,D,A)){
         return true;
     }
-    if (o4 === 0 && isPointOnSegment(C,D,B)){
+    if (Math.abs(o4) < 1e-9  && isPointOnSegment(C,D,B)){
         return true;
     }
     return false;
@@ -346,7 +378,7 @@ function doObjectsIntersect(objectA , objectB){
         return wireRectangleIntersect(objectA,objectB);
     }
     if (objectA.type === "rectangle" && objectB.points){
-        return wireRectangleIntersect(objectA,objectB);
+        return wireRectangleIntersect(objectB,objectA);
     }
 
     return false;
@@ -395,12 +427,21 @@ function wireRectangleIntersect(wire, rectangle){
 }
 
 function calculateCentreOfMass(object){
+
+    if (object.type === "circle"){
+        return {
+            x: object.x,
+            y: object.y
+        };
+    }
+
     if (object.type === "rectangle"){
         return {
             x: object.x + object.width/2,
             y:object.y + object.height /2
         };
     }
+    
     if (object.points){
         let totalLength =0 ;
         let weightX = 0;
@@ -423,12 +464,41 @@ function calculateCentreOfMass(object){
         if (totalLength === 0) return null;
         return {
             x:weightX/totalLength,
-            y:weightY/totalLength
+            y:weightY/totalLength,
         };
     }
     return null;
 }
 
+function calculateMomentOfInertia(object){
+    let mass = object.mass;
+    if (object.type === "circle"){
+        let radius = object.radius / PIXELS_PER_METER;
+        return mass * radius ** 2;
+    }
+    if (object.type === "rectangle"){
+        let width = Math.abs(object.width) / PIXELS_PER_METER;
+        let height = Math.abs(object.height) / PIXELS_PER_METER;
+        return mass * (width + height) ** 2 /12;
+    }
+    let totalInertia=0;
+    for (let i=0; i< object.points.length -1; i++){
+        let A = object.points[i];
+        let B = object.points[i+1];
+        let dx = (B.x - A.x) / PIXELS_PER_METER;
+        let dy = (B.y - A.y) / PIXELS_PER_METER;
+        let segmentLength = Math.sqrt(dx**2 + dy** 2);
+        let segmentMass = object.density * object.area * segmentLength;
+        let midpointX = (A.x + B.x)/2;
+        let midpointY = (A.y + B.y)/2;
+        let dxCOM= (midpointX - object.centreOfMass.x) / PIXELS_PER_METER;
+        let dyCOM = (midpointY - object.centreOfMass.y) / PIXELS_PER_METER;
+        let distanceSquared = dxCOM ** 2 + dyCOM ** 2;
+        let segmentInertia = (segmentMass * segmentLength ** 2) /12 + segmentMass * distanceSquared;
+        totalInertia += segmentInertia;
+    }
+    return totalInertia;
+}
 
 function animate(currentTime){
     if (lastTime===0){
